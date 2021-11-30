@@ -1,0 +1,48 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  SAM Template for HTF AWS Clue Indentification and notification Service - Event Source Adapters
+
+Parameters:
+    
+    EventbusArn:
+        Description: Arn of the Amazon EventBridge bus to which events are published to be processed.
+        Default: "<your reddit eventbus arn"
+        Type: String
+    
+  
+Resources:
+
+# -----------------------------
+# Functions
+# -----------------------------
+
+  FnSourceAdapterReddit:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: ../../src/adapters/fn-sourceAdapterReddit/
+      Handler: app.lambdaHandler
+      Runtime: nodejs14.x
+      Timeout: 10
+      Environment:
+        Variables:  
+            EventbusArn: !Sub ${EventbusArn}
+      Events:
+        CWSchedule:
+            Type: Schedule
+            Properties:
+                Schedule: 'rate(30 minutes)'
+      Policies:
+        - Statement:
+          - Effect: Allow
+            Action:
+              - 'events:PutEvents'
+            Resource: 
+              - !Sub ${EventbusArn}
+          - Effect: Allow
+            Action:
+              - 'ray:PutTraceSegments'
+              - 'xray:PutTelemetryRecords'
+            Resource: 
+              - '*'
+

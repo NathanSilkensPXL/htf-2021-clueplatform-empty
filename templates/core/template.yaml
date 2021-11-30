@@ -1,0 +1,93 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  SAM Template for HTF AWS Clue Indentification and notification Service - Core Processing service
+
+Parameters:
+
+    IdentifiedCluesEventbusArn:
+        Description: Name of the eventbridge bus which you created manually in the AWS web console
+        Default: "<your identified clues eventbus arn"
+        Type: String
+
+    RedditEventbusName:
+      Description: Name of the eventbridge bus which you created manually in the AWS web console
+      Default: "<your reddit eventbus arn"
+      Type: String
+
+
+Resources:
+
+# -----------------------------
+# Functions
+# -----------------------------
+
+  FnClueProcessor:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: ../../src/core/fn-clueProcessor/
+      Handler: app.lambdaHandler
+      Runtime: nodejs14.x
+      Timeout: 10
+      Environment:
+        Variables:
+          IdentifiedCluesEventbusArn: !Sub ${IdentifiedCluesEventbusArn}
+      Events:
+
+      Policies:
+        - Statement:
+          - Effect: Allow
+            Action:
+              - 'events:PutEvents'
+            Resource: 
+              - !Sub ${IdentifiedCluesEventbusArn}
+          - Effect: Allow
+            Action:
+              - 'comprehend:DetectSentiment'
+              - 'comprehend:DetectDominantLanguage'
+              - 'translate:TranslateText'
+            Resource:
+              - '*'
+          - Effect: Allow
+            Action:
+              - 'ray:PutTraceSegments'
+              - 'xray:PutTelemetryRecords'
+            Resource: 
+              - '*'  
+  
+# -----------------------------
+# EventBridge Sources
+# -----------------------------
+
+  I8cReceiveRedditEventsRule:
+    Type: AWS::Events::Rule
+    Properties:
+        EventBusName: !Ref RedditEventbusName
+        EventPattern:
+            source:
+                - "com.reddit.listing"
+        State: "ENABLED"
+        Targets:
+            -
+                Id: target-1
+                Arn: !GetAtt FnClueProcessor.Arn
+                InputTransformer:
+                    InputPathsMap:
+                      id: $.detail.subreddit_id
+                      text: $.detail.title
+                      author: $.detail.author_fullname
+                    InputTemplate: >
+                      {
+                        "id": <id>,
+                        "text": <text>,
+                        "author": <author>,
+                        "source": "reddit"
+                      }
+  
+  PermissionForRedditEventsToInvokeLambda: 
+    Type: AWS::Lambda::Permission
+    Properties: 
+      FunctionName: !GetAtt FnClueProcessor.Arn
+      Action: "lambda:InvokeFunction"
+      Principal: "events.amazonaws.com"
+      SourceArn: !GetAtt I8cReceiveRedditEventsRule.Arn

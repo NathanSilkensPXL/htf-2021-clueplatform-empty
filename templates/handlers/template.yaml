@@ -1,0 +1,88 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  SAM Template for HTF AWS Clue Indentification and notification Service - handlers
+
+Parameters:
+
+    WebhookSiteUrl:
+        Type: String
+        # Replace with your webhook.site url
+        Default: "https://webhook.site/edace593-0132-4bf9-8bf9-5142b13f345e"
+   
+    IdentifiedCluesEventBusName:
+        Type: String
+        Default: "<your identified clues eventbus arn"
+
+  
+Resources:
+
+# ----------------------------------------
+# Amazon EventBridge - API Destination(s)
+# ----------------------------------------
+
+  I8cWebhookSiteConnection:
+    Type: AWS::Events::Connection
+    Properties:
+        AuthorizationType: BASIC
+        AuthParameters:
+            BasicAuthParameters:
+                Username: "dummy"
+                Password: "dummy"
+
+  I8cWebhookSiteApiDestination:
+        Type: AWS::Events::ApiDestination
+        Properties:
+        Properties:
+            ConnectionArn: !GetAtt 'I8cWebhookSiteConnection.Arn'
+            InvocationEndpoint: !Ref WebhookSiteUrl
+            HttpMethod: POST
+            InvocationRateLimitPerSecond: 10
+            
+  I8cHandleIdentifiedCluesDeliveryRule:
+        Type: AWS::Events::Rule
+        Properties:
+            EventBusName: !Ref IdentifiedCluesEventBusName
+            EventPattern:
+                source:
+                    - "be.i8c.htf.demo.identifiedclue"
+            State: "ENABLED"
+            Targets:
+                -
+                    Id: target-1-webhooksite
+                    Arn: !GetAtt I8cWebhookSiteApiDestination.Arn
+                    RoleArn: !GetAtt I8cDeliveryTargetRole.Arn
+                    InputTransformer:
+                        InputPathsMap:
+                            text: $.detail.text
+                            sentiment: $.detail.sentiment
+                        InputTemplate: >
+                            {
+                                "text": <text>,
+                                "senti": <sentiment>
+                            }
+            
+# IAM Role
+  I8cDeliveryTargetRole:
+    Type: AWS::IAM::Role
+    Properties: 
+        AssumeRolePolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+                - 
+                    Effect: Allow
+                    Principal:
+                        Service:
+                            - events.amazonaws.com
+                    Action:
+                        - 'sts:AssumeRole'
+        Policies:
+            -   PolicyName: root
+                PolicyDocument:
+                    Version: "2012-10-17"
+                    Statement:
+                        - 
+                            Effect: Allow
+                            Action: 'events:InvokeApiDestination'
+                            Resource:
+                                - !GetAtt I8cWebhookSiteApiDestination.Arn
