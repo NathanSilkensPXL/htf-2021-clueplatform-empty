@@ -29,6 +29,8 @@ aws configure
 ![eventbridge](./docs/eventbus-creation.png)
 "myteamname-htf-2021-IdentifiedClues" and "myteamname-htf-2021-reddit" (see also overview)
 
+3. Update templates
+![template-config.png](./docs/template-config.png)
 ## Local development
 
 ```bash
