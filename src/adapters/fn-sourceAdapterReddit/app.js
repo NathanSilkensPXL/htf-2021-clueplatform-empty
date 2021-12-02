@@ -40,7 +40,7 @@ exports.lambdaHandler = async ( event ) => {
                     Resources: [
                         'arn:aws:events:eu-west-1:128894441789:event-bus/Kaasje-htf-2021-reddit'
                     ],
-                    Source: 'AskReddit',
+                    Source: 'com.reddit.listing',
                     Time: new Date || 'Wed Dec 31 1969 16:00:00 GMT-0800 (PST)' || 123456789
                 }
 
