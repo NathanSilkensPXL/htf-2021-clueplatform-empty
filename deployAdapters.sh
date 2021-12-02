@@ -1,6 +1,6 @@
 #!/bin/bash
 export STACK_NAME=Kaasje-htf2021-clueprocessing-adapters
-export MY_REGION=eu-central-1
+export MY_REGION=eu-west-1
 export MY_DEV_BUCKET=htf-deploymentbucket
 
 # Package new cloudformation package
