@@ -7,12 +7,12 @@ Parameters:
 
     IdentifiedCluesEventbusArn:
         Description: Name of the eventbridge bus which you created manually in the AWS web console
-        Default: "<your identified clues eventbus arn"
+        Default: "arn:aws:events:eu-west-1:128894441789:event-bus/Kaasje-htf-2021-IdentifiedClues"
         Type: String
 
     RedditEventbusName:
       Description: Name of the eventbridge bus which you created manually in the AWS web console
-      Default: "<your reddit eventbus arn"
+      Default: "arn:aws:events:eu-west-1:128894441789:event-bus/Kaasje-htf-2021-reddit"
       Type: String
 
 

@@ -7,7 +7,7 @@ Parameters:
     
     EventbusArn:
         Description: Arn of the Amazon EventBridge bus to which events are published to be processed.
-        Default: "<your reddit eventbus arn"
+        Default: "arn:aws:events:eu-west-1:128894441789:event-bus/Kaasje-htf-2021-reddit"
         Type: String
     
   
