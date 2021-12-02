@@ -27,9 +27,9 @@ exports.lambdaHandler = async ( event ) => {
         }
 
         console.log(JSON.stringify(identifiedclueEvent))
-
+        
         // STEP 4: Publish to configured EventBridge Eventbus
-
+        eventbridge.putEvents(identifiedclueEvent);
         
         return "succesfully finished"
     } catch (err) {
@@ -48,13 +48,35 @@ async function analyseText(text) {
     console.log("Detected languages: " + JSON.stringify(detectedLanguage))
 
     // STEP 2: Translate to english if language is not supported
-    
+    var translatedLanguage = null;
+
+    if(supportedLanguages.indexOf(detectedLanguage) == -1){
+        var params = {
+            SourceLanguageCode: detectedLanguage.Languages[0].LanguageCode, 
+            TargetLanguageCode: 'en', 
+            Text: text
+        };
+        translatedLanguage = await translate.translateText(params).promise();
+    };
+    console.log("Translated text: " + JSON.stringify(translatedLanguage))
 
     // STEP 3: Detect Sentiment
+    var postLanguageCode;
 
+    if(translatedLanguage != null){
+        postLanguageCode = "en";
+    }else{
+        postLanguageCode = detectedLanguage.Languages[0].LanguageCode;
+    }
+    var params = {
+        LanguageCode: postLanguageCode,
+        Text: text
+    };
 
+    var sentiment = await comprehend.detectSentiment(params).promise();
+    console.log("Sentiment: " + JSON.stringify(sentiment))
     return {
-        detectedLanguage: "TODO",
-        sentiment: "TODO"
+        detectedLanguage: translatedLanguage,
+        sentiment: sentiment.Sentiment
     }
 }
