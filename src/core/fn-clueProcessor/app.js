@@ -29,8 +29,24 @@ exports.lambdaHandler = async ( event ) => {
         console.log(JSON.stringify(identifiedclueEvent))
 
         // STEP 4: Publish to configured EventBridge Eventbus
+        var params = {
+            Entries: [
+                {
+                    Detail: JSON.stringify(identifiedclueEvent),
+                    DetailType: 'Identified clue',
+                    EventBusName: 'Kaasje-htf-2021-IdentifiedClues',
+                    Resources: [
+                        'arn:aws:events:eu-west-1:128894441789:event-bus/Kaasje-htf-2021-IdentifiedClues'
+                    ],
+                    Source: 'Clues',
+                    Time: new Date || 'Wed Dec 31 1969 16:00:00 GMT-0800 (PST)' || 123456789
+                }
 
-        
+            ]
+        }
+
+        var res = await eventbridge.putEvents(params).promise();
+        console.log(res)
         return "succesfully finished"
     } catch (err) {
         console.log(err);
@@ -48,13 +64,35 @@ async function analyseText(text) {
     console.log("Detected languages: " + JSON.stringify(detectedLanguage))
 
     // STEP 2: Translate to english if language is not supported
-    
+    var translatedLanguage = null;
+
+    if(supportedLanguages.indexOf(detectedLanguage) == -1){
+        var params = {
+            SourceLanguageCode: detectedLanguage.Languages[0].LanguageCode, 
+            TargetLanguageCode: 'en', 
+            Text: text
+        };
+        translatedLanguage = await translate.translateText(params).promise();
+    };
+    console.log("Translated text: " + JSON.stringify(translatedLanguage))
 
     // STEP 3: Detect Sentiment
+    var postLanguageCode;
 
+    if(translatedLanguage != null){
+        postLanguageCode = "en";
+    }else{
+        postLanguageCode = detectedLanguage.Languages[0].LanguageCode;
+    }
+    var params = {
+        LanguageCode: postLanguageCode,
+        Text: text
+    };
 
+    var sentiment = await comprehend.detectSentiment(params).promise();
+    console.log("Sentiment: " + JSON.stringify(sentiment))
     return {
-        detectedLanguage: "TODO",
-        sentiment: "TODO"
+        detectedLanguage: translatedLanguage,
+        sentiment: sentiment.Sentiment
     }
 }

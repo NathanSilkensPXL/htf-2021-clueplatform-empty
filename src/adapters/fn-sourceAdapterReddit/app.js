@@ -10,7 +10,6 @@ const snoowrap = require('snoowrap')
 */
 
 const r = new snoowrap({
-    
 });
 
 
@@ -18,9 +17,38 @@ exports.lambdaHandler = async ( event ) => {
     try {
         console.log(JSON.stringify(event))
         // STEP 1: Poll for new reddit entries
-        let newlist = r.getSubreddit('AskReddit').getNew()
+        const subreddit = await r.getSubreddit('AskReddit');
+        const newPosts = await subreddit.getNew({limit : 1});
+
+        let data = [];
+
+        console.log(JSON.stringify(newPosts))
+
+        newPosts.forEach((post) => {
+            data.push({
+              text: post.title
+            })
+          });
+
+        console.log(data[0].text);
+        var params = {
+            Entries: [
+                {
+                    Detail: JSON.stringify({ text: data[0].text }),
+                    DetailType: 'New post',
+                    EventBusName: 'Kaasje-htf-2021-reddit',
+                    Resources: [
+                        'arn:aws:events:eu-west-1:128894441789:event-bus/Kaasje-htf-2021-reddit'
+                    ],
+                    Source: 'AskReddit',
+                    Time: new Date || 'Wed Dec 31 1969 16:00:00 GMT-0800 (PST)' || 123456789
+                }
+
+            ]
+        }
         // STEP 2: Publish Reddit events to EventBridges with Source: 'com.reddit.listing'
-        eventbridge.putEvents(newlist);
+        var res = await eventbridge.putEvents(params).promise();
+        console.log(res)
         return "succesfully finished"
     } catch (err) {
         console.log(err);
