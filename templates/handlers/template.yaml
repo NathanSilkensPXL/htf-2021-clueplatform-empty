@@ -8,7 +8,7 @@ Parameters:
     WebhookSiteUrl:
         Type: String
         # Replace with your webhook.site url
-        Default: "https://webhook.site/edace593-0132-4bf9-8bf9-5142b13f345e"
+        Default: "https://webhook.site/6759d42f-1d92-4c3d-988e-acb63ceaede4"
    
     IdentifiedCluesEventBusName:
         Type: String
