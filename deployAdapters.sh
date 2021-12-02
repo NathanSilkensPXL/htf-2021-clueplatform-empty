@@ -1,5 +1,5 @@
 #!/bin/bash
-export STACK_NAME=<your team name>-htf2021-clueprocessing-adapters
+export STACK_NAME=Kaasje-htf2021-clueprocessing-adapters
 export MY_REGION=eu-central-1
 export MY_DEV_BUCKET=htf-deploymentbucket
 
