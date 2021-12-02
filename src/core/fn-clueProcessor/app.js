@@ -27,10 +27,26 @@ exports.lambdaHandler = async ( event ) => {
         }
 
         console.log(JSON.stringify(identifiedclueEvent))
-        
+
         // STEP 4: Publish to configured EventBridge Eventbus
-        eventbridge.putEvents(identifiedclueEvent);
-        
+        var params = {
+            Entries: [
+                {
+                    Detail: JSON.stringify(identifiedclueEvent),
+                    DetailType: 'Identified clue',
+                    EventBusName: 'Kaasje-htf-2021-IdentifiedClues',
+                    Resources: [
+                        'arn:aws:events:eu-west-1:128894441789:event-bus/Kaasje-htf-2021-IdentifiedClues'
+                    ],
+                    Source: 'Clues',
+                    Time: new Date || 'Wed Dec 31 1969 16:00:00 GMT-0800 (PST)' || 123456789
+                }
+
+            ]
+        }
+
+        var res = await eventbridge.putEvents(params).promise();
+        console.log(res)
         return "succesfully finished"
     } catch (err) {
         console.log(err);
